@@ -5,7 +5,7 @@ You are installing or updating Trail of Bits' Claude Code configuration into the
 Fetch each file from GitHub using WebFetch. The base URL is:
 
 ```
-https://raw.githubusercontent.com/trailofbits/claude-code-config/main/
+https://raw.githubusercontent.com/hribz/claude-code-config/main/
 ```
 
 Files to fetch when needed:

@@ -7,7 +7,7 @@ Opinionated defaults, documentation, and workflows for Claude Code at Trail of B
 **First-time setup:**
 
 ```bash
-git clone https://github.com/trailofbits/claude-code-config.git
+git clone https://github.com/hribz/claude-code-config.git
 cd claude-code-config
 claude
 ```
@@ -58,21 +58,45 @@ Before configuring anything, read these to understand the context for why this s
 
 #### Terminal: Ghostty
 
-Use [Ghostty](https://ghostty.org). It's the best terminal for Claude Code because it uses native Metal GPU rendering, so it handles the high-volume text output from long AI sessions without lag or memory bloat (~500MB vs ~8GB for two VS Code terminal sessions). Shift+Enter and key bindings work out of the box with no `/terminal-setup` needed, built-in split panes (Cmd+D / Cmd+Shift+D) let you run Claude Code alongside a dev server without tmux, and it never crashes during extended autonomous runs.
+Use [Ghostty](https://ghostty.org). It's the best terminal for Claude Code because it uses native GPU rendering, so it handles the high-volume text output from long AI sessions without lag or memory bloat. Shift+Enter and key bindings work out of the box with no `/terminal-setup` needed, built-in split panes let you run Claude Code alongside a dev server without tmux, and it never crashes during extended autonomous runs.
 
+**macOS:**
 ```bash
 brew install --cask ghostty
 ```
 
-macOS only. On Linux, see the [Ghostty install docs](https://ghostty.org/docs/install/binary#linux-(official)). No Windows support yet -- use WezTerm there.
+**Ubuntu 24.04:**
+```bash
+sudo add-apt-repository ppa:mkasberg/ghostty-ubuntu
+sudo apt update
+sudo apt install ghostty
+```
+
+No Windows support yet -- use WezTerm there.
 
 #### Tools
 
-Install core tools via Homebrew:
+**Ubuntu 24.04:** Install core tools via apt:
 
 ```bash
-brew install jq ripgrep fd ast-grep shellcheck shfmt \
-  actionlint zizmor macos-trash node@22 pnpm uv
+sudo apt update && sudo apt install -y jq ripgrep fd-find shellcheck shfmt actionlint nodejs npm
+echo 'alias fd=fdfind' >> ~/.bashrc
+npm install -g pnpm
+```
+
+**Additional tools (via official binaries or pip):**
+```bash
+# ast-grep
+curl -fsSL https://astgrep.com/install.sh | sh
+
+# zizmor
+curl -fsSL https://github.com/woodruffw/zizmor/releases/latest/download/zizmor-x86_64-unknown-linux-musl.tar.gz | tar -xz -C /usr/local/bin
+
+# uv (Python package manager)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# trash-cli (recoverable rm)
+sudo apt install trash-cli
 ```
 
 Python tools (via uv):
@@ -106,7 +130,7 @@ This installs `lms` (the CLI) and `llmster` (the headless daemon). Or install th
 
 ### Shell Setup
 
-Add to `~/.zshrc`:
+Add to `~/.bashrc`:
 
 ```bash
 alias claude-yolo="claude --dangerously-skip-permissions"
@@ -191,9 +215,7 @@ Claude Code has a native sandbox that provides filesystem and network isolation 
 - **Cloud credentials** -- `~/.aws/**`, `~/.azure/**`, `~/.kube/**`, `~/.docker/config.json`
 - **Package registry tokens** -- `~/.npmrc`, `~/.npm/**`, `~/.pypirc`, `~/.gem/credentials`
 - **Git credentials** -- `~/.git-credentials`, `~/.config/gh/**`
-- **Shell config** -- `~/.bashrc`, `~/.zshrc` (edit denied, prevents backdoor planting)
-- **macOS keychain** -- `~/Library/Keychains/**`
-- **Crypto wallets** -- metamask, electrum, exodus, phantom, solflare app data
+- **Shell config** -- `~/.bashrc` (edit denied, prevents backdoor planting)
 
 Without `/sandbox`, deny rules only block Claude's built-in tools -- Bash commands bypass them. With `/sandbox` enabled, the same rules are enforced at the OS level (Seatbelt/bubblewrap), so Bash commands are also blocked. Use both.
 
@@ -370,20 +392,28 @@ Copy `mcp-template.json` from this repo to `~/.mcp.json` for global availability
 
 ### Local Models
 
-Use [LM Studio](https://lmstudio.ai) to run local LLMs with Claude Code. LM Studio provides an Anthropic-compatible `/v1/messages` endpoint, so Claude Code connects with just a base URL change. On macOS it uses MLX for Apple Silicon-native inference, which is significantly faster than GGUF.
+Use [LM Studio](https://lmstudio.ai) to run local LLMs with Claude Code. LM Studio provides an Anthropic-compatible `/v1/messages` endpoint, so Claude Code connects with just a base URL change. On macOS it uses MLX for Apple Silicon-native inference. On Linux, LM Studio uses CUDA (NVIDIA) or ROCm (AMD) for GPU acceleration.
 
 #### Recommended model: Qwen3-Coder-Next (as of February 2026)
 
-[Qwen3-Coder-Next](https://lmstudio.ai/models/qwen3-coder-next) is an 80B mixture-of-experts model with only 3B active parameters, designed specifically for agentic coding. It handles tool use, long-horizon reasoning, and recovery from execution failures. The MLX 4-bit quantization is ~45GB and needs at least 64GB unified memory to load with a usable context window. 96GB or more is comfortable.
+[Qwen3-Coder-Next](https://lmstudio.ai/models/qwen3-coder-next) is an 80B mixture-of-experts model with only 3B active parameters, designed specifically for agentic coding. It handles tool use, long-horizon reasoning, and recovery from execution failures.
 
-Local models move fast. When this recommendation is stale, check the [LM Studio featured models page](https://lmstudio.ai/models) and pick the top coding model that fits in your memory as an MLX 4-bit quantization.
+- **macOS:** MLX 4-bit quantization (~45GB, needs 64GB+ unified memory)
+- **Linux NVIDIA:** CUDA 4-bit quantization (~45GB, needs 64GB+ VRAM with quantization)
+- **Linux AMD:** ROCm 4-bit quantization
+- **CPU-only:** Available but significantly slower; not recommended for production use
+
+Local models move fast. When this recommendation is stale, check the [LM Studio featured models page](https://lmstudio.ai/models) and pick the top coding model that fits in your GPU memory.
 
 #### Setup
 
 Download, load, and serve -- all from the CLI:
 
 ```bash
-lms get Qwen3-Coder-Next@MLX-4bit -y
+# Download the model (MLX for macOS, CUDA/ROCm for Linux)
+lms get Qwen3-Coder-Next -y
+
+# Load and serve (--gpu max uses all available GPU memory)
 lms load qwen/qwen3-coder-next --context-length 32768 --gpu max -y
 lms server start
 ```
