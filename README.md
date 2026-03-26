@@ -76,48 +76,44 @@ No Windows support yet -- use WezTerm there.
 
 #### Tools
 
-**Ubuntu 24.04:** Install core tools via apt:
+**Ubuntu 24.04:** Install core tools via apt and snap:
 
 ```bash
-sudo apt update && sudo apt install -y jq ripgrep fd-find shellcheck shfmt actionlint nodejs npm
+sudo apt update && sudo apt install -y jq ripgrep fd-find shellcheck shfmt trash-cli
 echo 'alias fd=fdfind' >> ~/.bashrc
-npm install -g pnpm
+sudo snap install actionlint
 ```
 
-**Additional tools (via official binaries or pip):**
-```bash
-# ast-grep
-curl -fsSL https://astgrep.com/install.sh | sh
-
-# zizmor
-curl -fsSL https://github.com/woodruffw/zizmor/releases/latest/download/zizmor-x86_64-unknown-linux-musl.tar.gz | tar -xz -C /usr/local/bin
-
-# uv (Python package manager)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# trash-cli (recoverable rm)
-sudo apt install trash-cli
-```
-
-Python tools (via uv):
-
-```bash
-uv tool install ruff
-uv tool install ty
-uv tool install pip-audit
-```
-
-Rust toolchain:
+**Rust toolchain** (install first, needed for Rust-based tools below):
 
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-cargo install prek worktrunk cargo-deny cargo-careful
 ```
 
-Node tools:
+**Rust tools:**
 
 ```bash
-npm install -g oxlint agent-browser
+cargo install --locked ast-grep zizmor prek worktrunk cargo-deny cargo-careful
+```
+
+**Node.js** (via nvm):
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+nvm install 22
+npm install -g pnpm oxlint agent-browser
+```
+
+**uv** (Python package manager):
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Python tools** (via uv):
+
+```bash
+uv tool install ruff ty pip-audit
 ```
 
 LM Studio (for [local models](#local-models)):
